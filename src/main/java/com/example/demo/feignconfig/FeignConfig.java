@@ -7,22 +7,27 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 @Configuration
 public class FeignConfig {
 
     @Bean
-    public RequestInterceptor interceptor() {
-        return template -> {
-            ServletRequestAttributes attrs =
-                    (ServletRequestAttributes)
-                    RequestContextHolder.getRequestAttributes();
+    public RequestInterceptor requestInterceptor() {
+        return requestTemplate -> {
 
-            if (attrs != null) {
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes)
+                            RequestContextHolder.getRequestAttributes();
+
+            if (attributes != null) {
+                HttpServletRequest request =
+                        attributes.getRequest();
+
                 String token =
-                        attrs.getRequest().getHeader("Authorization");
+                        request.getHeader("Authorization");
 
                 if (token != null) {
-                    template.header("Authorization", token);
+                    requestTemplate.header("Authorization", token);
                 }
             }
         };

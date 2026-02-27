@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
 import java.util.List;
 
 @RestController
@@ -18,14 +18,17 @@ public class LoanController {
     private final LoanService loanService;
 
     @PostMapping("/apply")
-    public ResponseEntity<LoanResponseDTO> apply(
-            @Valid @RequestBody LoanRequestDTO request) {
+    public ResponseEntity<?> applyLoan(
+            @RequestBody LoanRequestDTO dto,
+            Authentication authentication) {
 
-        LoanResponseDTO response = loanService.applyLoan(request);
+        // 🔥 Extract username from JWT
+        String username = authentication.getName();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                loanService.applyLoan(dto, username));
     }
-    
+
     @PutMapping("/update/{id}")
     public ResponseEntity<LoanResponseDTO> update(
             @PathVariable Long id,
@@ -39,10 +42,11 @@ public class LoanController {
         loanService.cancelLoan(id);
         return ResponseEntity.ok("Loan Cancelled Successfully");
     }
+
     @GetMapping("/status/{id}")
     public ResponseEntity<LoanResponseDTO> status(@PathVariable Long id) {
         return ResponseEntity.ok(loanService.getLoanStatus(id));
-    } 
+    }
 
     @GetMapping("/{loanId}")
     public ResponseEntity<LoanResponseDTO> getLoanById(
@@ -50,5 +54,18 @@ public class LoanController {
 
         return ResponseEntity.ok(
                 loanService.getLoanById(loanId));
+    }
+
+    @PutMapping("/status")
+    public ResponseEntity<LoanResponseDTO> updateLoanStatus(
+            @RequestParam("applicationId") Long applicationId,
+            @RequestParam("status") String status,
+            @RequestParam(value = "reason", required = false) String reason) {
+        return ResponseEntity.ok(loanService.updateLoanStatus(applicationId, status, reason));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<LoanResponseDTO>> getAllLoans() {
+        return ResponseEntity.ok(loanService.getAllLoans());
     }
 }
